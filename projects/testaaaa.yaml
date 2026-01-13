@@ -17,3 +17,8 @@ applications:
       repo: hack4
       triggerPaths:
         - src/**
+addons:
+  - name: hackfour-debezium
+    bootstrap: kafka:9092
+    storage: 10Gi
+    type: debezium
