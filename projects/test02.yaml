@@ -16,7 +16,7 @@ applications:
       owner: JAEJUN090210
       repo: prKHJ_Frontend_fork
       triggerPaths:
-        - /
+        - /fff
 addons:
   - name: test
     storage: 1Gi
