@@ -1,0 +1,17 @@
+applications:
+  - name: my-application-puhaha
+    build:
+      vite:
+        buildCommand: pnpm build
+        distPath: dist
+        nodeVersion: "3"
+    endpoints:
+      - port: 8080
+        routes:
+          - myself.saram.dev
+    github:
+      branch: main
+      hash: aaa
+      installationId: "1234"
+      owner: kimsaram32
+      repo: me-backup
