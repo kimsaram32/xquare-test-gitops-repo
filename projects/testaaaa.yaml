@@ -1,0 +1,19 @@
+applications:
+  - name: hackfour
+    build:
+      nodejs:
+        buildCommand: pnpm install --frozen-lockfile
+        nodeVersion: "20"
+        startCommand: pnpm start
+    endpoints:
+      - port: 3000
+        routes:
+          - hack4.dsmhs.kr
+    github:
+      branch: main
+      hash: ab4c8d56779b4d230c47c8af1110b1cb5129af3c
+      installationId: "103943924"
+      owner: kimsaram32
+      repo: hack4
+      triggerPaths:
+        - src/**
