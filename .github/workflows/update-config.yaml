@@ -1,0 +1,139 @@
+# ------------------------------
+# Configuration API 워크플로우
+#
+# 본 GitHub Actions 워크플로우는 GitOps 기반 환경에서 애플리케이션의 설정
+# 요청을 처리하는 기능을 수행합니다. 이 워크플로우는 "config-api" 타입의
+# repository_dispatch 이벤트를 수신하고, 해당 페이로드에 지정된 액션에 따라
+# 필요한 작업을 수행합니다.
+#
+# 지원되는 액션:
+#  - apply: 지정된 애플리케이션/애드온의 설정을 추가하거나 업데이트합니다.
+#  - remove: 특정 애플리케이션/애드온의 설정을 제거합니다.
+#
+# 사용 예시:
+#  - 애플리케이션의 hash를 업데이트하는 경우:
+#      github.event.client_payload.path: "projects/project-name/applications/service-name"
+#      github.event.client_payload.action: "apply"
+#      github.event.client_payload.spec:
+#        {
+#          "github": {
+#            "hash": "abc123def"
+#          }
+#        }
+#
+#  - 애플리케이션의 전체 설정을 업데이트하는 경우:
+#      github.event.client_payload.path: "projects/project-name/applications/service-name"
+#      github.event.client_payload.action: "apply"
+#      github.event.client_payload.spec:
+#        {
+#          "tier": "x3.small",
+#          "github": {
+#            "hash": "latest"
+#          },
+#          "endpoints": [
+#            {
+#              "port": 8080,
+#              "routes": ["service.dsmhs.kr"]
+#            }
+#          ]
+#        }
+#
+#  - 애드온을 추가하는 경우:
+#      github.event.client_payload.path: "projects/project-name/addons/redis-name"
+#      github.event.client_payload.action: "apply"
+#      github.event.client_payload.spec:
+#        {
+#          "type": "redis",
+#          "tier": "x3.micro",
+#          "storage": "1Gi"
+#        }
+#
+#  - 애플리케이션 설정을 제거하는 경우:
+#      github.event.client_payload.path: "projects/project-name/applications/service-name"
+#      github.event.client_payload.action: "remove"
+#
+#  - 애드온을 제거하는 경우:
+#      github.event.client_payload.path: "projects/project-name/addons/redis-name"
+#      github.event.client_payload.action: "remove"
+#
+#  - 프로젝트 전체를 삭제하는 경우:
+#      github.event.client_payload.path: "projects/project-name"
+#      github.event.client_payload.action: "remove"
+#
+# ------------------------------
+
+name: Configuration API
+
+on:
+  repository_dispatch:
+    types: [config-api]
+
+jobs:
+  handle-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install yq
+        run: |
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Process Request with Retry
+        run: |
+          set -e
+          git config user.name "kimsaram32"
+          git config user.email "kimsaram32@proton.me"
+
+          RETRIES=5
+          for i in $(seq 1 $RETRIES); do
+            git pull --rebase origin main || true
+
+            PATH_PARAMS="${{ github.event.client_payload.path }}"
+            ACTION="${{ github.event.client_payload.action }}"
+            SPEC='${{ toJson(github.event.client_payload.spec) }}'
+
+            IFS='/' read -r -a PATH_ARRAY <<< "$PATH_PARAMS"
+            RESOURCE_TYPE="${PATH_ARRAY[0]}"
+            PROJECT="${PATH_ARRAY[1]}"
+            SUB_RESOURCE="${PATH_ARRAY[2]}"
+            NAME="${PATH_ARRAY[3]}"
+            FILE="projects/$PROJECT.yaml"
+
+            add_or_update_sub_resource () {
+              local resource_type="$1"
+              yq eval "with(.${resource_type}; (first(.name == \"$NAME\") // (. += { \"name\": \"$NAME\" } | first(.name == \"$NAME\"))) *= ${SPEC})" -i $FILE
+            }
+
+            case "$ACTION" in
+              "apply")
+                mkdir -p $(dirname $FILE)
+                [ ! -f "$FILE" ] && echo "applications: []" > $FILE
+                if [ "$SUB_RESOURCE" = "applications" ]; then
+                  add_or_update_sub_resource "applications"
+                elif [ "$SUB_RESOURCE" = "addons" ]; then
+                  yq eval "(.addons // (.addons = [])) | parent" -i $FILE
+                  echo "ok"
+                  add_or_update_sub_resource "addons"
+                fi
+                ;;
+              "remove")
+                [ -f "$FILE" ] && {
+                  [ "$SUB_RESOURCE" = "applications" ] && yq eval "del(.applications[] | select(.name == \"$NAME\"))" -i $FILE
+                  [ "$SUB_RESOURCE" = "addons" ] && yq eval "del(.addons[] | select(.name == \"$NAME\"))" -i $FILE
+                  [ -z "$SUB_RESOURCE" ] && rm $FILE
+                }
+                ;;
+            esac
+
+            git add .
+            git diff-index --quiet HEAD || git commit -m "${ACTION} ${PATH_PARAMS}"
+
+            if git push; then
+              echo "Push succeeded"
+              break
+            else
+              echo "Push failed, retrying ($i/$RETRIES)..."
+              sleep 2
+            fi
+          done
