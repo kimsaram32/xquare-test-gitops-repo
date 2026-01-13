@@ -1,4 +1,22 @@
-applications: []
+applications:
+  - name: testa
+    build:
+      flask:
+        buildCommand: "1"
+        pythonVersion: "1"
+        startCommand: "1"
+    endpoints:
+      - port: 1
+        routes:
+          - www.test.dsmhs.kr
+    github:
+      branch: main
+      hash: b635b994704d88d66b323c7bd497509adbc091dc
+      installationId: "103953293"
+      owner: JAEJUN090210
+      repo: prKHJ_Frontend_fork
+      triggerPaths:
+        - /
 addons:
   - name: test
     storage: 1Gi
