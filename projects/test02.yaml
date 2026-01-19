@@ -19,7 +19,7 @@ applications:
         - /
 addons:
   - name: test
-    storage: 0Gi
+    storage: 1Gi
     type: postgresql
   - name: test-a
     storage: 1Gi
