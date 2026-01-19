@@ -9,13 +9,6 @@ applications:
       - port: 1
         routes:
           - www.test.dsmhs.kr
-      - port: 10
-        routes:
-          - test.dsmhs.kr
-          - test.dsmhs.kr
-      - port: 110
-        routes:
-          - test.dsmhs.kr
     github:
       branch: main
       hash: b635b994704d88d66b323c7bd497509adbc091dc
