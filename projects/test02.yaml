@@ -11,7 +11,6 @@ applications:
           - www.test.dsmhs.kr
     github:
       branch: main
-      hash: b635b994704d88d66b323c7bd497509adbc091dc
       installationId: "103953293"
       owner: JAEJUN090210
       repo: prKHJ_Frontend_fork
