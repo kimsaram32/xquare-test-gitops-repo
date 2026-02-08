@@ -1,4 +1,20 @@
-applications: []
+applications:
+  - name: test-fe
+    build:
+      vite:
+        buildCommand: build command
+        distPath: ./dist
+        nodeVersion: "00"
+    endpoints:
+      - port: 80
+        routes:
+          - www.test-fe.dsmhs.kr
+    github:
+      branch: main
+      hash: 04b2801f38bb6d82ef7ca54ad63760803f757fb6
+      installationId: "104986082"
+      owner: JAEJUN090210
+      repo: DAEXI-FE_fork
 addons:
   - name: mysqldb
     storage: 1Gi
