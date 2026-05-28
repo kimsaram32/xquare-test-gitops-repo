@@ -3,3 +3,6 @@ addons:
   - name: tests
     storage: 1Gi
     type: mysql
+  - name: testaddon
+    storage: 1Gi
+    type: mysql
