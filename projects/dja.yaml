@@ -1,5 +1,2 @@
 applications: []
-addons:
-  - name: test
-    storage: 1Gi
-    type: postgresql
+addons: []
