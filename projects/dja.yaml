@@ -1,2 +1,5 @@
 applications: []
-addons: []
+addons:
+  - name: test
+    storage: 111Gi
+    type: mysql
